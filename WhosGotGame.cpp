@@ -10,28 +10,15 @@
 #include <string>
 #include <stdlib.h>
 #include <vector>
+#include <list>
 
-
-/**
- *
- *Prints out the vector for testing purposes
- */
-void printVector(std::vector<int> pVector){
-    for (int i = 0; i < pVector.size(); i++){
-        std::cout << pVector.at(i) << std::endl;
+void printVector(std::vector<int> *pMatrix, int V){
+    for (int k = 1; k < V; k++){
+    
+        for(std::vector<int>::const_iterator i = pMatrix[k].begin(); i != pMatrix[k].end(); ++i){
+        std::cout << *i << std::endl;
+        }
     }
-
-}
-
-
-
-/**
- * Method that returns a string containing the gameplay type
- */
-std::string gametype(){
-    const std::string GAME_TYPE_LINEAR = "Linear Gameplay";
-    const std::string GAME_TYPE_NONLINEAR = "Non Linear Gameplay";
-    const std::string GAME_TYPE_INFEASABLE = "Infeasable Gameplay";
     
 }
 
@@ -53,25 +40,18 @@ int main(int argc,char*  argv[]){
         n = atoi(argv[i]);
         m = atoi(argv[i+1]);
         
-        std::vector<int> causeAndEffectVector;
-        
+        std::vector<int> *adjMatrix = new std::vector<int> [n+1];
         int k = i +2;
         for (int j = 0; j < m*2; j+=2){
             //This loop goes through the D and U variables and does something with them
             d = atoi(argv[k+j]);
             u = atoi(argv[k+1+j]);
-
-            //The vector will have D be even and U be Odd
-            causeAndEffectVector.push_back(d);
-            causeAndEffectVector.push_back(u);      
+            
+            adjMatrix[d].push_back(u);        
+                       
         }
-        
-        
-     
-        i += (atoi(argv[i+1])*2) + 2; 
-         
-        printVector(causeAndEffectVector);        
-
+        printVector(adjMatrix, n+1);
+        i += (atoi(argv[i+1])*2) + 2;
     }
     std::cout << "out of loop" << std::endl;
 }
