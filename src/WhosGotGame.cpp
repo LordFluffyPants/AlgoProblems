@@ -1,4 +1,4 @@
-/** Each test case will begin with a line with two integers n ( 1 <= n <= 2,000) and m (1 <= m <= 50,000), Where n is the number of tasks, and m is the number of relationships between items 
+/** Each test case will begin with a line with two integers n ( 2 <= n <= 2,000) and m (1 <= m <= 50,000), Where n is the number of tasks, and m is the number of relationships between items 
  * On each of the next m lines will be two integers, d and u (1 <= u, d <= n, d != u) which indicate that collecting item or preforming action d allows access to item or action u.
  * The input will end with two 0's on their own line. 
  *
@@ -59,13 +59,13 @@ bool isCyclic(std::vector<int> *pMatrix, int V){
  * It increases the visited count until it reaches the last node witch will not exicute the for loop because of the pMatrix.begin() == pMatrix.end()
  * If it reaches the end of the recursive call then it will return false
  *
- *
+ * The recursive call has a cost of O(V+E)
  */
-bool isLinearRecursive(std::vector<int> *pMatrix, bool visited[], int node,int visitedCount, int stackSize){
+bool isLinearRecursive(std::vector<int> *pMatrix, bool (&visited)[], int node,int visitedCount){
     visited[node] = true;
     visitedCount++;
     //This is the base case it which the call will return true
-    if(visitedCount == stackSize) return true;
+    if(visitedCount == visited.size()-1) return true;
      
     for(std::vector<int>::const_iterator i = pMatrix[V].begin(); i != pMatrix[V].end(); ++i){
         //returns true for the call if at the end of the nodes the visited count will = the stackSize
@@ -82,8 +82,6 @@ bool isLinearRecursive(std::vector<int> *pMatrix, bool visited[], int node,int v
  * Would have an visited stack to check the next starting node.
  */
 bool isLinear(std::vector<int> *pMatrix, int V){
-    //TODO See if their is a way to check for previous values otherwise visited array is pointless
-    
     //This loop checks if the matrix has multiple children connecting it 
     //if the loop has multiple children then the gameplay is non linear    
     for (int k = 1; k < V; k++)
@@ -96,8 +94,10 @@ bool isLinear(std::vector<int> *pMatrix, int V){
 
     for (int j = 1; j < V; j++){
         //V-1 is passed in because V is n+1 as to create a loop that will check pMatrix[1-n] 
-        //v-1 is also the size of the stack in this case            
-        if (isLinearRecursive(pMatrix, visited, j, 0,V-1)) return true;
+        //v-1 is also the size of the stack in this case
+        if ( visited[j] = false){            
+            if (isLinearRecursive(pMatrix, visited, j, 0)) return true;
+        }
     }
     return false;      
 }
