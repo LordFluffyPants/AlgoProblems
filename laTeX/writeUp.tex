@@ -1,4 +1,24 @@
-\documentclass{article}
+\documentclass[11pt]{article}
+\usepackage{listings}
+\usepackage{color}
+\lstset{language=C++, 
+  frame=tb,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}   
 \begin{document}
   \title{420 Algorithim's solution}
   \author{John Wesley Hayhurst}
@@ -6,6 +26,7 @@
 \section{Problem 1: Who's Got Game}
 
 \subsection{Sample Input and Output}
+For each test case, print a single line of output containing 'Infeasible game' if the proposed gameplay sequences are impossible, 'Linear gameplay' if exactly one sequence is possible, or 'Nonlinear gameplay possible' if multiple arrangements are possible (no matter how many arrangements there are).
 The input of the user at start up can have multiple games within it.
 \begin{flushleft}
 
@@ -49,12 +70,213 @@ Nonlinear gameplay possible
 Linear gameplay possible
 
 Infeasible game 
+\end{flushleft}
 \subsection{Dicussion}
+The progam itself has a cost of $\mathcal{O}(V + E)$ with constants being ignored without constants being ignored the cost of program without constants being ignored is $\mathcal{O}(2V+2E)$.
+
+The main method of the program takes commandline arguments and then checks if the next two values are not $0$ and $0$. The program will then continue to run until the starting values of the next "game" are $0$ and $0$. The code will then set the first two integers as $n$ and $m$ respectivly. It will then create an adjacency matrix of size $n + 1$ since there will not be a $0$ node and the matrix is to represent nodes $ 1\rightarrow  n$. The next loop will hen go through the next nodes adding them to the adjacency matrix with the matrix at position $d$ will hold the value $u$. The main method will then check if the "game" has linear, non-linear, or the game is infeasible. The main method invokes isCyclic and isLinear to check the game type. By process if the game is not linear and it is non cyclic by calling the isCyclic and isLinear then the game must be non-linear.
+
+The isCyclic method checks if there are cycles in the graph, the mehtod also has a recursive method that helps detect the cycles. The non-recursive method then initiates a visited and recursive stack boolean array of size $V + 1$ (Where $V$ is the total number of nodes in the graph) since the adjacency matrix is shifted to make sure each node numerically corrisponds to the adjacency matrix. Then for all of the nodes in the graph it will use the recursive call to check if there is a way to get back to the initial node from traversing the nodes linked to it. To detect this the code keeps track of the nodes currently in the recursive stack while doing a depth first search. This is acheived by checking if the node has not been visited and then marked it visited in the visited and recursive stack boolean array. It will then construct and iterator that will grab the child nodes from the adjacency matrix. If the child is the same as the parent then the graph contains a self cycle and will return true. If it doesnt it will then call itself recursively to make sure that it has not visited the child and continue the depth first search. Then if the recursive stack of the child is marked as true then it will return true as the child has been visited before. If it still has not detected a cycle it will then set the node corrispoding to the recursive stack to false and then return false. This method is a modified DFS and thus has a complexity of $\mathcal{O}(V+E)$.
+
+The isLinear method is simular to the isCyclic in that it also has a recursive helper and uses a modified depth first search to check if the graph is linear. The method will first check if any of the nodes have more than one edge. If a node has more than one edge then it will then have a branching pathway making non-linear gameplay possible thus making linear gameplay impossible. After the check the method will create a visited boolean array that will store if that node has been visited. Then it will invoke the recursive helper if the starting node has not been visited. The recursive helper has a base case if the number of visited nodes using the recursive call is the same size as the stack then the game must be linear. If the size using depth first search is not equal the the size of the stack then it must either be a disjointed graph or the starting node is not the head of the graph and thus will return false. The function will then check the remaining unvisited nodes as the starting point of the depth first search. Please take not of the for loop in the recursive call. This might be a cause for concern to say the method is not optimal. The for loop exists to safely check for the child node of the parent. It does this by moving the iterator before exicuting the for loop to make sure then child is not null thus having a null pointer exception. Since this method uses a modified depth first search without adding complexity the complexity of this method would be $\mathcal{O}(V+E)$.
+
 \subsection{Code}
+\begin{lstlisting}[frame=single]
+/** Each test case will begin with a line with two integers n ( 2 <= n <= 2,000) and m (1 <= m <= 50,000), Where n is the number of tasks, and m is the number of relationships between items 
+ * On each of the next m lines will be two integers, d and u (1 <= u, d <= n, d != u) which indicate that collecting item or preforming action d allows access to item or action u.
+ * The input will end with two 0's on their own line. 
+ *
+ *@Date: 4-20-15
+ *@Author: Jake Hayhurst
+ */
+
+#include <iostream>
+#include <string>
+#include <stdlib.h>
+#include <vector>
+#include <list>
+
+/**
+ * Recursively calls the function to check if the node has been not visited.
+ * If it has not been visited then sets visited in the bool stack to be true and the recStack to be true as well to check later in recursive calls.
+ * then loops through each node to check for the next node using DFS. If the node loops onto itself i.e. you need 4 to unlock 4 then it would be cyclic. If the child node is not visited and the child node using the recursive call is able to make it back to the child then it will be cyclic.
+ */
+bool isCyclicRecursive(std::vector<int> *pMatrix, int V, bool visited[], bool *recStack){
+    if (visited[V] == false){
+        visited[V] = true;
+        recstack[V] = true;
+                
+        for(std::vector<int>::const_iterator i = pMatrix[V].begin(); i != pMatrix[V].end(); ++i){
+            if (*i == V) return true;
+            if (!visited[*i] && isCyclicRecursive(pMatrix,*i, visited, recStack))
+                return true;
+            else if (recStack[*i])
+                return true; 
+        }
+    }
+    recStack [V] = false;
+    return false;
+}
+
+/**
+ * This method will check if the adjMatrix is cyclic or not
+ * It inits the visited and recStack matrixes to false as they have not visited any node
+ */
+bool isCyclic(std::vector<int> *pMatrix, int V){  
+    
+    bool *visited = new bool[V];
+    bool *recStack = new bool[V];
+    for (int i = 1; i < V; i ++){
+        visited[i] = false;
+        recStack[i] = false;
+    }   
+    for (int i = 1; i < V; i++)
+        if (isCyclicRecursive(pMatrix,i, visited, recStack))
+            return true;
+    return false;   
+}
+
+
+/**
+ * This is the recursive call for the Linear check
+ * The for loop is to safely check for the end of the node and does not contribute to the function cost as the node would not have more than one child.
+ * It increases the visited count until it reaches the last node witch will not exicute the for loop because of the pMatrix.begin() == pMatrix.end()
+ * If it reaches the end of the recursive call then it will return false
+ *
+ * The recursive call has a cost of O(V+E)
+ */
+bool isLinearRecursive(std::vector<int> *pMatrix, bool (&visited)[], int node,int visitedCount){
+    visited[node] = true;
+    visitedCount++;
+    //This is the base case it which the call will return true
+    if(visitedCount == visited.size()-1) return true;
+     
+    for(std::vector<int>::const_iterator i = pMatrix[V].begin(); i != pMatrix[V].end(); ++i){
+        //returns true for the call if at the end of the nodes the visited count will = the stackSize
+        if(isLinearRecursive(pMatrix, visited, *i, visitedCount, stackSize))
+            return true;   
+    }
+    return false;             
+}
+
+/**
+ * This method will check id the adjMatrix is linear or not.
+ * If the node has more than one child then it would be non linear gameplay thus would not be linear.
+ * This would use DFS to check the children to see if it is the same as the stack size.
+ * Would have an visited stack to check the next starting node.
+ */
+bool isLinear(std::vector<int> *pMatrix, int V){
+    //This loop checks if the matrix has multiple children connecting it 
+    //if the loop has multiple children then the gameplay is non linear    
+    for (int k = 1; k < V; k++)
+        if (pMatrix[k].size() > 1) 
+            return false;
+    
+    bool *visited = new bool[V];
+    for (int i = 1; i < V; i++) 
+        visited[i] = false;
+
+    for (int j = 1; j < V; j++){
+        //V-1 is passed in because V is n+1 as to create a loop that will check pMatrix[1-n] 
+        //v-1 is also the size of the stack in this case
+        if ( visited[j] = false){            
+            if (isLinearRecursive(pMatrix, visited, j, 0)) return true;
+        }
+    }
+    return false;      
+}
+
+/**
+ * Main method for determining gameplay type
+ */
+int main(int argc,char*  argv[]){
+
+    //This initalizes the variables for use
+    int d = 0; //D allows access to item or action U
+    int u = 0; //U is the item or action 
+    int n = 0; //N is the number of items or tasks
+    int m = 0; //M is the number of relations between items
+    //Ends initilization of the variables
+    
+    int i = 1;
+    while (atoi(argv[i]) != 0 || atoi(argv[i+1]) != 0){
+        //This loop inits values N and M and then incriments 
+        n = atoi(argv[i]);
+        m = atoi(argv[i+1]);
+        
+        std::vector<int> *adjMatrix = new std::vector<int> [n+1];
+        int k = i +2;
+        for (int j = 0; j < m*2; j+=2){
+            //This loop goes through the D and U variables and does something with them
+            d = atoi(argv[k+j]);
+            u = atoi(argv[k+1+j]);
+            
+            adjMatrix[d].push_back(u);        
+                       
+        }
+        //printVector(adjMatrix, n+1);
+
+        //This checks for what type of gameplay is possible
+        if (isCyclic(adjMatrix, n+1)){ 
+            std::cout << "Infeasable Game" << std::endl;
+        }
+        else if (isLinear(adjMatrix, n+1)){
+            std::cout<< "Linear Gameplay" << std::endl;
+        }
+        else {
+            std::cout << "Non-Linear Gameplay Possible" << std::endl;
+        }
+        
+        //Incriments I to go to the next inputed value
+        i += (atoi(argv[i+1])*2) + 2;
+    }
+}
+\end{lstlisting}
 \section{Fun, Fun, Fun "Auf der Autobahn"}  
 \subsection{Sample Input and Output}
+For each route request, your program should output the starting point and the destination point as well as the total travel distance in km and the total distance traveled on the Autobahn (also in km).
+\begin{flushleft}
+\textbf{Sample Input:}
+\vspace{2mm}
+\par
+6
+
+A B C D E F
+
+7
+
+A B 10 a
+
+B C 10 a
+
+D A 1 b
+
+E B 5 b
+
+F C 1 b
+
+D E 10 b
+
+E F 10 b
+
+3
+
+A B
+D E
+F D
+\vspace{2mm}
+\par
+\textbf{Sample Output:}
+A B 10 10 
+
+D E 10 0
+
+F D 22 20
+\vspace{2mm}
+\par
+\end{flushleft}
 \subsection{Discussion}
 \subsection{Code}
-\end{flushleft}
+
 
 \end{document}
